@@ -3,7 +3,7 @@
         <div class="slds-m-around_medium">
             <p>{statusMessage}</p>
             <lightning-input if:false={hideAttach} label="Attachment" name="file1" type="file" accept=".csv" onchange={fileParser}></lightning-input>
-            <template if:true={tasks.data}>
+            <template if:true={tasks}>
                     <lightning-button if:false={hideInsert} label="Create Records" onclick={insertTasks}></lightning-button>
                     <table class="TaskTable" style="width:100%">
                             <tr>
@@ -13,7 +13,7 @@
                                 <th>WhoId</th>
                             </tr>
                             
-                            <template for:each={tasks.data} for:item="task">
+                            <template for:each={tasks} for:item="task">
                                     <tr key={task.Id}>  <td>{task.Subject}</td> <td>{task.Type}</td> <td>{task.WhatId}</td> <td>{task.WhoId}</td>  </tr>
                             </template>
                         </table>
