@@ -1,0 +1,10 @@
+aura/
+classes/*
+components/*
+lwc/*
+pages/*
+staticresources/*
+triggers/*
+!CreateActivitiesController.*
+!BatchableTaskInsert.*
+!lwc/helloWorld
