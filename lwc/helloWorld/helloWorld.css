@@ -1,0 +1,10 @@
+.TaskTable tr:nth-child(even) {
+    background-color: rgb(221, 219, 218);
+  }
+  .TaskTable tr:nth-child(odd) {
+    background-color: white;
+  }
+  .TaskTable th {
+    color: black;
+    background-color: rgb(243, 242, 242);
+  }
