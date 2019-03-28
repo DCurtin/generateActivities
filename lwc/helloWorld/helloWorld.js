@@ -41,7 +41,7 @@ export default class HelloWorld extends LightningElement {
             .then(function(result)
             {
                 //this.tasks=result;
-                if(this.tasks.length > 1000)
+                if(true)//(this.tasks.length > 1000)
                 {
                     this.stateTransition(this.STATES.COMPLETE1k);
                 }else
@@ -155,7 +155,7 @@ export default class HelloWorld extends LightningElement {
 
             case this.STATES.COMPLETE1k:
             //if count > 1k notify user that a batch job started
-            //they will receice and email when finished
+            //they will receive and email when finished
 
             this.statusMessage='You are creating over 1000 records, you will be emailed when the job is finished. Note this can take awhile.';
             break;

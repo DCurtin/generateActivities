@@ -29,7 +29,7 @@ public with sharing class CreateActivitiesController
         insert desTasks.get('data');
         return desTasks.get('data');
 		*/
-        if(tasks.size() > 1000)
+        if(tasks.size() > 0)
         {
             System.debug('Batching Task');
             BatchableTaskInsert batchTask = new BatchableTaskInsert(tasks);
@@ -105,8 +105,8 @@ public with sharing class CreateActivitiesController
     {
         Task newTask = new Task();
 
-        newTask.WhatId          =   (id)'0014D00000GOalNQAT';//(id)items[columnMapping.get('WhatId')];
-        newTask.WhoId           =   (id)'0034D00000KWgvGQAT';//(id)items[columnMapping.get('WhoId')];
+        newTask.WhatId          =   (id)items[columnMapping.get('WhatId')];
+        newTask.WhoId           =   (id)items[columnMapping.get('WhoId')];
         newTask.RecordTypeId    =   (id)'01230000000iJsSAAU';//id lookup via developer name
         newTask.Type            =   'Mail';
         newTask.Status          =   'Completed';
