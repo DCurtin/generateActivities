@@ -29,9 +29,6 @@ global class BatchableTaskInsert implements Database.Batchable<SObject>, Databas
 	    	insert scope;
 		}catch(Exception err)
 		{
-			//this.failedTasks.addAll(scope);
-			System.debug('Failed Tasks');
-			//string line = '';
 			for(SObject failedTask : scope)
 			{
 				Map<string,object> failedTaskMap = failedTask.getPopulatedFieldsAsMap();
@@ -44,16 +41,11 @@ global class BatchableTaskInsert implements Database.Batchable<SObject>, Databas
 				}
 				List<object> failedTaskValues = failedTaskMap.values();
 				String failedTaskLine = String.join(failedTaskValues, ',');
-				//Task castedFail = (Task)failedTask;
-				//line= String.valueof(failedTask);
-				//this.failedTasksCSVList.add(String.valueof(castedFail.whoId) +','+String.valueof(castedFail.whatId)+','+String.valueof(castedFail.Subject)+'\n');
 				this.failedTasksCSVList.add(failedTaskLine + '\n');
-				//System.debug('Failed: ' + this.failedTasksCSV);
-			}
-			
+			}		
 		}
 	}
-	
+
 	/**
 	 * @description gets invoked when the batch job finishes. Place any clean up code in this method.
 	 * @param context contains the job ID
