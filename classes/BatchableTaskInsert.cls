@@ -27,21 +27,39 @@ global class BatchableTaskInsert implements Database.Batchable<SObject>, Databas
    	global void execute(Database.BatchableContext context, List<SObject> scope) {
 		try{
 	    	insert scope;
-		}catch(Exception err)
+		}catch(System.DmlException err)
 		{
-			for(SObject failedTask : scope)
+			map<integer,string> errorMessage = new map<integer,string>();
+			
+			for(integer index=0; index<err.getNumDml(); ++index)
 			{
+				errorMessage.put(err.getDmlIndex(index), err.getDmlMessage(index));
+			}
+
+			//using a regular for loop so that I can reference index for getting the right error message
+			for(integer index=0; index<scope.size(); ++index)
+			{
+				Sobject failedTask = scope.get(index);
+
 				Map<string,object> failedTaskMap = failedTask.getPopulatedFieldsAsMap();
 				if(failedTasksCSVList.size() == 0)
 				{
 					List<string> failedTaskKeys = new List<string>();
 					failedTaskKeys.addAll(failedTaskMap.keySet());
 					string header= String.join(failedTaskKeys,',');
-					failedTasksCSVList.add(header + '\n');
+					failedTasksCSVList.add(header + ',DML Error' + '\n');
 				}
 				List<object> failedTaskValues = failedTaskMap.values();
 				String failedTaskLine = String.join(failedTaskValues, ',');
-				this.failedTasksCSVList.add(failedTaskLine + '\n');
+				
+				string dmlError = errorMessage.get(index);
+				dmlError = dmlError == null? '':dmlError;
+
+				this.failedTasksCSVList.add(failedTaskLine +',' + dmlError + '\n');
+				
+				
+
+				
 			}		
 		}
 	}
