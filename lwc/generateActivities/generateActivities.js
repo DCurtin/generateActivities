@@ -34,19 +34,34 @@ export default class generateActivities extends LightningElement {
         COMPLETE:       'complete'
     }
 
+    TYPES = {
+        FMV:        'FMV',
+        MATURES:    'Matured Note',
+        MONTHLY:    'Monthly Statement'
+    }
+
+    get options() {//generate options for radio group from TYPES dictionary
+        return this.generateOptionsFromTypes(this.TYPES);
+    }
+
+    generateOptionsFromTypes(types)
+    {
+        let options= [];
+        
+        Object.keys(types).forEach(key => {
+            console.log(types[key]);
+            options.push({label: types[key], value:key});
+        });
+        return options;
+    }
+
     constructor()
     {
         super();
         this.stateTransition(this.STATES.INIT);
     }
 
-    get options() {
-        return [
-            { label: 'FMV', value: 'FMV' },
-            { label: 'Matured Note', value: 'MATURED' },
-            { label: 'Monthly Statement', value: 'MONTHLY' }
-        ];
-    }
+    
     
     setType(event)
     {
@@ -98,7 +113,7 @@ export default class generateActivities extends LightningElement {
             alert("Please choose a type of activity.");
             return;
         }
-        this.fileParser(this.chosenType)
+        this.fileParser(this.chosenType);
     }
 
 
@@ -119,11 +134,7 @@ export default class generateActivities extends LightningElement {
             
         
             activitiesWrapper = 
-            {
-                csvLines: rows,
-                options: {someVar: "1",
-                        somveVar2: "2"}
-            };    
+              
         
             this.stateTransition(this.STATES.GENERATETASKS);
             //var row;
@@ -155,6 +166,16 @@ export default class generateActivities extends LightningElement {
             
         }.bind(this)
     }
+
+    /*generateParamters(type,rows)
+    {
+        
+        {
+            csvLines: rows,
+            options: {someVar: "1",
+                    somveVar2: "2"}
+        };  
+    }*/
 
     stateTransition(state)
     {
