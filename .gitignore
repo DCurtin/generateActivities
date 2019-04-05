@@ -7,4 +7,6 @@ staticresources/*
 triggers/*
 !CreateActivitiesController.*
 !BatchableTaskInsert.*
+!ActivitiesWrapper.*
 !lwc/helloWorld
+!lwc/generateActivities
