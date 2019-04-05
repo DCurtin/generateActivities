@@ -5,33 +5,14 @@
 */
 public with sharing class CreateActivitiesController
 {
-    //public Blob csvFileBody{get;set;}
-    ///public string csvAsString{get;set;}
-    //private List<Task> tasksToImport = new List<Task>();
-
     
     public CreateActivitiesController()
     {}
     
-    
-    
     @AuraEnabled
     public static List<Task> insertActivitiesAction(List<task> tasks)
     {
-        /*
-        //pushing update
-        map<string,list<Task>> desTasks = new map<string,list<Task>>();
-        desTasks= (map<string,list<Task>>) Json.deserialize(tasks, map<string,list<Task>>.class);
-        
-        
-        System.debug(desTasks);
-        
-        insert desTasks.get('data');
-        return desTasks.get('data');
-		*/
-
-            insert tasks;
-        
+        insert tasks;        
         return tasks;
     }
 

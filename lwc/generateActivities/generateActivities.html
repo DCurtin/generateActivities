@@ -2,8 +2,23 @@
     <lightning-card title="GenerateActivities" icon-name="custom:custom63">
         <div class="slds-m-around_medium">
             <p>{statusMessage}</p>
-            <lightning-input if:false={hideAttach} label="Attachment" name="file1" type="file" accept=".csv" onchange={fileParser}></lightning-input>
-            <template if:true={tasks}>
+
+            <template if:false={hideAttach}>
+                <lightning-input label="Attachment" name="file1" type="file" accept=".csv" onchange={setFilesAndTransitionStateToGetType}></lightning-input>
+            </template>
+
+            <template if:false={hideTypeSelection}>
+                <lightning-radio-group  name="typeSelection"
+                                        label="Radio Group"
+                                        options={options}
+                                        value={value}
+                                        required
+                                        onchange={setType}
+                                        type="button"></lightning-radio-group>
+                <lightning-button label="Choose Type" onclick={checkRadioSelectedAndTransitionToSplit}></lightning-button>
+            </template>
+
+            <template if:false={hideStaging}>
                     <lightning-button if:false={hideInsert} label="Create Records" onclick={insertTasks}></lightning-button>
                     <table class="TaskTable" style="width:100%">
                             <tr>

@@ -9,19 +9,23 @@ export default class generateActivities extends LightningElement {
     description="";
     subject="";
     task="";
-
-    //@wire(generateActivitiesAction, {csvBlob:"$csvBlob"})
     csvBlob = null;
-    //@wire(generateActivitiesAction, { csvBlob: '$csvBlob' })
+    files= [];
+
+    @track chosenType = '';
+
     @track tasks;
     @track statusMessage;// = 'Hello, please attach a csv.';
     @track error;
     
     @track hideAttach;
     @track hideInsert;
+    @track hideTypeSelection;
+    @track hideStaging;
 
     STATES = {
         INIT:           'init',
+        GETTYPE:        'getType',
         SPLIT:          'split',
         GENERATETASKS:  'generateTasks',
         PROMPTINSERT:   'promptInsert',
@@ -29,13 +33,30 @@ export default class generateActivities extends LightningElement {
         COMPLETE1k:     'complete1k',
         COMPLETE:       'complete'
     }
-    //currentState = STATES.INIT;
 
-    //get subject(){ return this.task.data ? getSObjectValue(this.task.data, SUBJECT_FIELD) : '';}
     constructor()
     {
         super();
         this.stateTransition(this.STATES.INIT);
+    }
+
+    get options() {
+        return [
+            { label: 'FMV', value: 'FMV' },
+            { label: 'Matured Note', value: 'MATURED' },
+            { label: 'Monthly Statement', value: 'MONTHLY' }
+        ];
+    }
+    
+    setType(event)
+    {
+        this.chosenType = event.target.value;
+    }
+
+    setFilesAndTransitionStateToGetType(event)
+    {
+        this.stateTransition(this.STATES.GETTYPE)
+        this.files = event.detail.files;
     }
 
     insertTasks(){
@@ -70,13 +91,23 @@ export default class generateActivities extends LightningElement {
         }
     }
 
-    fileParser(event){
+    checkRadioSelectedAndTransitionToSplit()
+    {
+        if(this.chosenType==='')
+        {
+            alert("Please choose a type of activity.");
+            return;
+        }
+        this.fileParser(this.chosenType)
+    }
+
+
+    fileParser(type){
         var reader = new FileReader();
         this.stateTransition(this.STATES.SPLIT);
 
-        const ufiles = event.detail.files;
 
-        reader.readAsText(ufiles[0], "UTF-8");
+        reader.readAsText(this.files[0], "UTF-8");
         reader.onload = function (evt) {
             var csv = evt.target.result;
             var rows = csv.split("\n");
@@ -138,10 +169,18 @@ export default class generateActivities extends LightningElement {
             this.csvBlob = null;
 
             this.hideAttach=false;
+            this.hideTypeSelection=true;
+            this.hideStaging=true;
             this.hideInsert=true;
 
             this.statusMessage='Hello, Please attach a csv.';
 
+            break;
+
+            case this.STATES.GETTYPE:
+            this.statusMessage='Please choose a type of activity.';
+            this.hideAttach=true;
+            this.hideTypeSelection=false;
             break;
 
             case this.STATES.SPLIT:
@@ -150,7 +189,9 @@ export default class generateActivities extends LightningElement {
 
             this.hideAttach=true;
             this.hideInsert=true;
-            
+            this.hideTypeSelection=true;
+            this.hideStaging=false;
+
             this.statusMessage='Splitting CSV please wait...';
             break;
 
