@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
 /* eslint-disable no-alert */
-import { LightningElement, track, wire} from 'lwc';
+import { LightningElement, track} from 'lwc';
 import generateActivitiesAction from '@salesforce/apex/CreateActivitiesController.generateActivitiesAction';
 import insertActivitiesAction from '@salesforce/apex/CreateActivitiesController.insertActivitiesAction';
 import insertActivitiesActionBatch from '@salesforce/apex/CreateActivitiesController.insertActivitiesActionBatch';
@@ -126,16 +126,9 @@ export default class generateActivities extends LightningElement {
         reader.onload = function (evt) {
             var csv = evt.target.result;
             var rows = csv.split("\n");
-            var invokeCallArgument = null;
-            var activitiesWrapper = null;
-            this.csvBlob = rows;
-
-            
-            
-        
-            activitiesWrapper = 
-              
-        
+            var activitiesWrapper = this.generateParamters(type,rows);
+            //this.csvBlob = rows;
+    
             this.stateTransition(this.STATES.GENERATETASKS);
             //var row;
             //console.log("EVT FN");
@@ -145,9 +138,9 @@ export default class generateActivities extends LightningElement {
             //this.greeting = row;
             
             //this.greeting ='generating tasks, please wait.'
-            invokeCallArgument = { 
+            /*invokeCallArgument = { 
                 
-                csvBlob: this.csvBlob }
+                csvBlob: this.csvBlob }*/
             generateActivitiesAction({activities: activitiesWrapper})
             .then(function(result)
             {
@@ -167,26 +160,52 @@ export default class generateActivities extends LightningElement {
         }.bind(this)
     }
 
-    /*generateParamters(type,rows)
+    generateParamters(type,rows)
     {
-        
+        switch(type)
         {
-            csvLines: rows,
-            options: {someVar: "1",
-                    somveVar2: "2"}
-        };  
-    }*/
+            case this.TYPES.FMV:
+                return {
+                    csvLines:   rows,
+                    options:    {Type:          'Mail',
+                                 Subject:       'Mail: FMV ',
+                                 Description:   'Mailed out FMV',
+                                 Status:        'Completed',
+                                 }
+                }
+            case this.TYPES.MATURES:
+                return {
+                    csvLines:   rows,
+                    options:    {Type:          'Mail',
+                                 Subject:       'Mail: Matured Note Notice',
+                                 Description:   'Mailed out mature note notice',
+                                 Status:        'Completed',
+                                 }
+                }
+            case this.TYPES.MONTHLY:
+                return {
+                    csvLines:   rows,
+                    options:    {Type:          'Mail',
+                                 Subject:       'Mail: Monthly Statement',
+                                 Description:   'Mailed out monthly statement',
+                                 Status:        'Completed',
+                                 }
+                }
+            default:
+                return null;
+        }
+    }   
 
     stateTransition(state)
-    {
-        switch(state)
-        {
-            case this.STATES.INIT:
-            //set initial state clearing tasks/csvBlob
-            //and showing attach/hiding insert
-            //and initial message
+    {   
+            switch(state)
+            {
+                case this.STATES.INIT:
+                //set initial state clearing tasks/csvBlob
+                //and showing attach/hiding insert
+                //and initial message
 
-            this.tasks = null;
+                this.tasks = null;
             this.csvBlob = null;
 
             this.hideAttach=false;
