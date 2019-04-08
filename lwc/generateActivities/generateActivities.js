@@ -15,8 +15,8 @@ export default class generateActivities extends LightningElement {
     @track chosenType = '';
 
     @track tasks;
-    @track statusMessage;// = 'Hello, please attach a csv.';
-    @track error;
+    @track statusMessage;
+    @track error;//currently not being used though I would like to implement pretty error messaging with this
     
     @track hideAttach;
     @track hideInsert;
@@ -49,7 +49,6 @@ export default class generateActivities extends LightningElement {
         let options= [];
         
         Object.keys(types).forEach(key => {
-            console.log(types[key]);
             options.push({label: types[key], value:key});
         });
         return options;
@@ -61,23 +60,65 @@ export default class generateActivities extends LightningElement {
         this.stateTransition(this.STATES.INIT);
     }
 
-    
-    
-    setType(event)
-    {
-        this.chosenType = event.target.value;
-    }
-
+    //user starts here, after a file is selected by the user, they choose what type of activity it is
     setFilesAndTransitionStateToGetType(event)
     {
         this.stateTransition(this.STATES.GETTYPE)
         this.files = event.detail.files;
     }
 
+    setType(event)//sets type via radio group
+    {
+        this.chosenType = this.TYPES[event.target.value];
+    }
+
+    checkRadioSelectedAndTransitionToSplit()
+    {
+        if(this.chosenType==='')
+        {
+            alert("Please choose a type of activity.");
+            return;
+        }
+        this.fileParser(this.chosenType);
+    }
+    /*
+        split file and pass it to the apex class for task generation
+        display the results to the user.
+    */
+    fileParser(type){
+        var reader = new FileReader();
+        this.stateTransition(this.STATES.SPLIT);
+
+        reader.readAsText(this.files[0], "UTF-8");
+        reader.onload = function (evt) {
+            var csv = evt.target.result;
+            var rows = csv.split("\n");
+            var activitiesWrapper = this.generateParamters(type,rows);
+
+            this.stateTransition(this.STATES.GENERATETASKS);
+
+            generateActivitiesAction({activities: activitiesWrapper})
+            .then(function(result)
+            {
+                this.stateTransition(this.STATES.PROMPTINSERT);
+                this.tasks=result;
+            }.bind(this))
+            .catch(error => {
+                //need to create propper error reporting
+                console.log(error);
+                alert(error);
+                //this.error = error;
+            });
+        }.bind(this)
+    }
+
+    /*
+        Action for submitting generated activities/tasks
+        If there are more then 1k itmes then it will go to a batchable
+        otherwise it will attempt the upload right here and notify of
+        it's success.
+    */ 
     insertTasks(){
-        /*var tasks = JSON.stringify(this.tasks);
-        console.log(tasks);*/
-        //this.stateTransition(this.STATES.COMPLETE1k);
         this.stateTransition(this.STATES.INSERTING);
 
         if(this.tasks.length > 1000)
@@ -85,9 +126,10 @@ export default class generateActivities extends LightningElement {
             insertActivitiesActionBatch({ tasks: this.tasks })
             .then(function(result)
             {
-                this.stateTransition(this.STATES.COMPLETE);
+                this.stateTransition(this.STATES.COMPLETE1k);
             }.bind(this))
             .catch(error => {
+                //need to create propper error reporting
                 console.log(error);
                 alert(error);
             });
@@ -106,60 +148,14 @@ export default class generateActivities extends LightningElement {
         }
     }
 
-    checkRadioSelectedAndTransitionToSplit()
-    {
-        if(this.chosenType==='')
-        {
-            alert("Please choose a type of activity.");
-            return;
-        }
-        this.fileParser(this.chosenType);
-    }
+    //helper functions
 
-
-    fileParser(type){
-        var reader = new FileReader();
-        this.stateTransition(this.STATES.SPLIT);
-
-
-        reader.readAsText(this.files[0], "UTF-8");
-        reader.onload = function (evt) {
-            var csv = evt.target.result;
-            var rows = csv.split("\n");
-            var activitiesWrapper = this.generateParamters(type,rows);
-            //this.csvBlob = rows;
-    
-            this.stateTransition(this.STATES.GENERATETASKS);
-            //var row;
-            //console.log("EVT FN");
-            //console.log('@@@ csv file contains'+ csv);
-            
-            //console.log("split successful");
-            //this.greeting = row;
-            
-            //this.greeting ='generating tasks, please wait.'
-            /*invokeCallArgument = { 
-                
-                csvBlob: this.csvBlob }*/
-            generateActivitiesAction({activities: activitiesWrapper})
-            .then(function(result)
-            {
-                this.stateTransition(this.STATES.PROMPTINSERT);
-                this.tasks=result;
-            }.bind(this))
-            .catch(error => {
-                console.log(error);
-                alert(error);
-                //this.error = error;
-            });
-            //var result = helper.CSV2JSON(component,csv);
-            //console.log('@@@ result = ' + result);
-            //console.log('@@@ Result = '+JSON.parse(result));
-            //helper.CreateAccount(component,result);
-            
-        }.bind(this)
-    }
-
+    /*
+        Defines each type of paramter
+        I also want to add an other/custom option where
+        users can provide their own arguments for these
+        parameters.
+    */
     generateParamters(type,rows)
     {
         switch(type)
@@ -173,6 +169,7 @@ export default class generateActivities extends LightningElement {
                                  Status:        'Completed',
                                  }
                 }
+            break;
             case this.TYPES.MATURES:
                 return {
                     csvLines:   rows,
@@ -196,88 +193,83 @@ export default class generateActivities extends LightningElement {
         }
     }   
 
+    /*
+        Simple state setter for changing how ui elements are
+        displayed based on what state the controller is in
+        durring execution.
+    */
     stateTransition(state)
     {   
             switch(state)
             {
                 case this.STATES.INIT:
-                //set initial state clearing tasks/csvBlob
-                //and showing attach/hiding insert
-                //and initial message
 
-                this.tasks = null;
-            this.csvBlob = null;
+                    this.tasks              =null;
+                    this.csvBlob            =null;
 
-            this.hideAttach=false;
-            this.hideTypeSelection=true;
-            this.hideStaging=true;
-            this.hideInsert=true;
+                    this.hideAttach         =false;
+                    this.hideTypeSelection  =true;
+                    this.hideStaging        =true;
+                    this.hideInsert         =true;
 
-            this.statusMessage='Hello, Please attach a csv.';
+                    this.statusMessage      ='Hello, Please attach a csv.';
 
-            break;
+                break;
 
-            case this.STATES.GETTYPE:
-            this.statusMessage='Please choose a type of activity.';
-            this.hideAttach=true;
-            this.hideTypeSelection=false;
-            break;
+                case this.STATES.GETTYPE:
+                    this.tasks              =null;
+                    this.chosenType         ='';
 
-            case this.STATES.SPLIT:
-            //hide attach
-            //change message
+                    this.hideAttach         =true;
+                    this.hideInsert         =true;
+                    this.hideTypeSelection  =false;
 
-            this.hideAttach=true;
-            this.hideInsert=true;
-            this.hideTypeSelection=true;
-            this.hideStaging=false;
+                    this.statusMessage      ='Please choose a type of activity.';
+                break;
 
-            this.statusMessage='Splitting CSV please wait...';
-            break;
+                case this.STATES.SPLIT:
 
-            case this.STATES.GENERATETASKS:
-            //change message
+                    this.hideAttach         =true;
+                    this.hideInsert         =true;
+                    this.hideTypeSelection  =true;
+                    this.hideStaging        =false;
 
-            this.statusMessage='Generating activities please wait...';
-            break;
+                    this.statusMessage      ='Splitting CSV please wait...';
+                break;
 
-            case this.STATES.PROMPTINSERT:
-            //show attach
-            //show insert
-            //prompt to insert current tasks for start over
+                case this.STATES.GENERATETASKS:
 
-            this.hideAttach=false;
-            this.hideInsert=false;
+                    this.statusMessage      ='Generating activities please wait...';
+                break;
 
-            this.statusMessage='Would you like to insert these records or insert a different set?';
-            break;
+                case this.STATES.PROMPTINSERT:
 
-            case this.STATES.INSERTING:
-            //hide attach
-            //hide insert
-            //change message
+                    this.hideAttach         =false;
+                    this.hideInsert         =false;
 
-            this.hideAttach=true;
-            this.hideInsert=true;
+                    this.statusMessage      ='Would you like to insert these records or insert a different set?';
+                break;
 
-            this.statusMessage='Inserting Docs';
-            break;
+                case this.STATES.INSERTING:
 
-            case this.STATES.COMPLETE1k:
-            //if count > 1k notify user that a batch job started
-            //they will receive and email when finished
+                    this.hideAttach         =true;
+                    this.hideInsert         =true;
 
-            this.statusMessage='You are creating over 1000 records, you will be emailed when the job is finished. Note this can take awhile.';
-            break;
+                    this.statusMessage      ='Inserting Docs';
+                break;
 
-            case this.STATES.COMPLETE:
-            //notify user inserts are complete
+                case this.STATES.COMPLETE1k:
 
-            this.statusMessage='Inserts Complete!';
-            break;
+                    this.statusMessage      ='You are creating over 1000 records, you will be emailed when the job is finished. Note this can take awhile.';
+                break;
 
-            default:
-            //set default
+                case this.STATES.COMPLETE:
+
+                    this.statusMessage      ='Inserts Complete!';
+                break;
+
+                default:
+                //set default
         }
     }
 

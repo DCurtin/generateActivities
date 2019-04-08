@@ -5,6 +5,9 @@
 */
 public with sharing class CreateActivitiesController
 {
+    //should really change this to a user provided argument that his thoroughly checked 
+    //currently only two task types and All Tasks is seemingly used for everything.
+    private static final id RECORDTYPEID = Schema.SObjectType.Task.getRecordTypeInfosByName().get('All Tasks').getRecordTypeId();
     
     public CreateActivitiesController()
     {}
@@ -24,17 +27,20 @@ public with sharing class CreateActivitiesController
     }
     
 
-    @AuraEnabled(cacheable=true)
+    @AuraEnabled(cacheable=false)//can't be cacheable if provided activities can change
     public static List<Task> generateActivitiesAction(ActivitiesWrapper activities)
     {
+        system.debug('TEST: ' + activities.options.get('Subject'));
+        if(activities==null)
+        {
+            System.debug('No activities set.');
+            return null;
+        }
         
         map<string,string> columnNamesMap = new map<string,string>{'Account #: Client Contact ID'=>'WhoId', 'Account #: Account ID'=>'WhatId'};
         map<string, string> options = activities.options;
         System.debug('generating avtivities');
-        if(activities==null)
-        {
-            return null;
-        }
+        
         
         
          List<String> csvLines = activities.csvLines;
@@ -98,14 +104,14 @@ public with sharing class CreateActivitiesController
         newTask.WhoId           =   (id)items[columnMapping.get('WhoId')];
 
         //get from user, either csv or input
-        newTask.RecordTypeId    =   (id)'01230000000iJsSAAU';//id lookup via developer name
-        string Type             =  options.get('someVar');//items[columnMapping.get('Type')];
+        newTask.RecordTypeId    =   RECORDTYPEID;//(id)'01230000000iJsSAAU';//id lookup via developer name
+        string Type             =   options.get('Type');//items[columnMapping.get('Type')];
         newTask.Type            =   type==null?'Mail':type;
-        newTask.Subject         =   'Mail: Monthly Statement';
-        newTask.Description     =   'Mailed out monthly statement';
+        newTask.Subject         =   options.get('Subject');
+        newTask.Description     =   options.get('Description');
+        newTask.Status          =   options.get('Status');
 
-        //static or automagically retrieved
-        newTask.Status          =   'Completed';        
+        //static or automagically retrieved  
         newTask.ActivityDate    =   Date.today();
         newTask.OwnerId         =   System.UserInfo.getUserId(); //lookup by query or get id of uploader
 
